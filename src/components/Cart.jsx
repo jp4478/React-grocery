@@ -47,7 +47,7 @@ const Cart = () => {
       }
     };
 
-    if (cart.length()) {
+    if (cart.length >0) {
       fetchImagesAndUpdateCart();
     }
   }, [cart]);

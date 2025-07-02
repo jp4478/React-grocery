@@ -1,13 +1,65 @@
 import React, { useContext, useState } from "react";
 import AppContext from "../Context/Context";
 import { FaSearch, FaShoppingCart, FaMapMarkerAlt } from "react-icons/fa";
-import axios from "../axios"; // or just 'axios' if you use the default import
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+const DropdownMenu = ({ items, level = 0 }) => (
+  <ul className={`dropdown-menu level-${level}`}>
+    {items.map((item) => (
+      <li key={item.key} className="dropdown-item">
+        <span>{item.label}</span>
+        {item.children && item.children.length > 0 && (
+          <DropdownMenu items={item.children} level={level + 1} />
+        )}
+      </li>
+    ))}
+  </ul>
+);
+
+const SubMenuPanel = ({ items, onChildHover, activeChildIdx, level = 1 }) => {
+  if (!items) return null;
+  return (
+    <div className={`submenu-panel level-${level}`}>
+      <ul>
+        {items.map((item, idx) => (
+          <li
+            key={item.key}
+            className={`submenu-item${activeChildIdx === idx ? " active" : ""}`}
+            onMouseEnter={() => onChildHover(idx)}
+            onMouseLeave={() => onChildHover(null)}
+          >
+            <span>{item.label}</span>
+            {item.children && <span style={{ float: "right" }}>▶</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+const SubMenuContent = ({ items, activeIdx, level = 1 }) => {
+  if (!items || activeIdx == null || !items[activeIdx] || !items[activeIdx].children) return null;
+  return (
+    <div className={`submenu-content level-${level}`}>
+      <div style={{ fontWeight: 700, marginBottom: 12 }}>
+        See All {items[activeIdx].label}
+      </div>
+      <ul>
+        {items[activeIdx].children.map((child) => (
+          <li key={child.key} className="submenu-content-item">
+            {child.label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 const Navbar = ({ search, setSearch, searchResults, setSearchResults, cart }) => {
   const { fetchProductsByChildMenu, setSelectedProducts, menu } = useContext(AppContext);
-  const [openIndex, setOpenIndex] = useState(null);
-  const [openSubIndex, setOpenSubIndex] = useState(null);
+  const [activeIdx, setActiveIdx] = useState(null);
+  const [activeSubIdx, setActiveSubIdx] = useState(null);
   const navigate = useNavigate();
 
   const handleSearch = async (e) => {
@@ -29,8 +81,16 @@ const Navbar = ({ search, setSearch, searchResults, setSearchResults, cart }) =>
     setSearch("");            // Clear the search bar
     setSearchResults([]);     // Clear the search results
     const products = await fetchProductsByChildMenu(childMenuName);
-    setSelectedProducts(products); // This should update the products shown in Home.jsx
-    navigate("/"); // <-- This will switch the route to home/products page
+    setSelectedProducts(products);
+    navigate("/");
+  };
+
+  const handleSubChildClick = async (childMenuName) => {
+    setSearch("");            // Clear the search bar
+    setSearchResults([]);     // Clear the search results
+    const data = await fetchProductsByChildMenu(childMenuName);
+    setSelectedProducts(data);
+    navigate("/");
   };
 
   return (
@@ -143,97 +203,111 @@ const Navbar = ({ search, setSearch, searchResults, setSearchResults, cart }) =>
           </div>
         </div>
         {/* Navbar Menu */}
-        <div style={{
-          display: "flex",
-          gap: "32px",
-          background: "#fff",
-          padding: "12px 0 12px 0",
-          borderBottom: "1px solid #eee",
-          fontSize: "1rem",
-          fontWeight: 500,
-          marginBottom: "8px"
-        }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "32px",
+            background: "#181818",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: "1.1rem",
+            padding: "12px 0",
+            borderBottom: "1px solid #eee",
+            marginBottom: "8px",
+            position: "relative",
+            zIndex: 10,
+          }}
+        >
           {menu.map((item, idx) => (
-            <div key={item.label + '-' + idx}>
-              <div
-                style={{ position: "relative" }}
-                onMouseEnter={() => setOpenIndex(idx)}
-              >
-                <span style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
-                  {item.label}
-                  {item.children && item.children.length > 0 && <span>▼</span>}
-                </span>
-                {/* First-level Dropdown */}
-                {openIndex === idx && item.children && item.children.length > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      background: "#fff",
-                      border: "1px solid #eee",
-                      borderRadius: "6px",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                      minWidth: "180px",
-                      zIndex: 1000,
-                    }}
-                    onMouseLeave={() => { setOpenIndex(null); setOpenSubIndex(null); }} // <-- KEEP THIS HERE
-                  >
-                    {item.children.map((child, cidx) => (
-                      <div key={child.label + '-' + idx + '-' + cidx}>
-                        <div
+            <div
+              key={item.key}
+              className="navbar-item"
+              style={{
+                position: "relative",
+                padding: "0 18px",
+                cursor: "pointer",
+                color: "#fff",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                borderBottom: activeIdx === idx ? "3px solid #e53935" : "none",
+                background: activeIdx === idx ? "#fff" : "#181818",
+                color: activeIdx === idx ? "#e53935" : "#fff",
+                zIndex: 11,
+              }}
+              onMouseEnter={() => { setActiveIdx(idx); setActiveSubIdx(null); }}
+              onMouseLeave={() => { setActiveIdx(null); setActiveSubIdx(null); }}
+            >
+              <span>{item.label}</span>
+              {item.children && <span style={{ marginLeft: 6, color: "#2196f3" }}>▼</span>}
+              {/* Dropdown panel */}
+              {activeIdx === idx && item.children && (
+                <div
+                  className="mega-menu-panel"
+                  style={{
+                    display: "flex",
+                    position: "absolute",
+                    left: 0,
+                    top: "100%",
+                    background: "#fff",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                    minWidth: 600,
+                    zIndex: 100,
+                  }}
+                  onMouseLeave={() => { setActiveIdx(null); setActiveSubIdx(null); }}
+                >
+                  {/* Sidebar */}
+                  <div style={{
+                    minWidth: 220,
+                    borderRight: "1px solid #eee",
+                    background: "#fff",
+                    padding: "16px 0",
+                  }}>
+                    <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                      {item.children.map((child, subIdx) => (
+                        <li
+                          key={child.key}
+                          className={`submenu-item${activeSubIdx === subIdx ? " active" : ""}`}
                           style={{
-                            padding: "10px 18px",
+                            padding: "12px 24px",
                             cursor: "pointer",
-                            whiteSpace: "nowrap",
-                            borderBottom: "1px solid #f0f0f0",
-                            position: "relative",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between"
+                            color: activeSubIdx === subIdx ? "#e53935" : "#222",
+                            background: activeSubIdx === subIdx ? "#f5f5f5" : "#fff",
+                            fontWeight: 500,
                           }}
-                          onMouseEnter={() => setOpenSubIndex(cidx)}
+                          onMouseEnter={() => setActiveSubIdx(subIdx)}
                         >
-                          {child.label}
-                          {child.children && child.children.length > 0 && <span style={{ marginLeft: 8 }}>▶</span>}
-                          {/* Second-level Dropdown */}
-                          {openSubIndex === cidx && child.children && child.children.length > 0 && (
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: 0,
-                                left: "100%",
-                                marginLeft: "-10px", // or more, to overlap
-                                background: "#fff",
-                                border: "1px solid #eee",
-                                borderRadius: "6px",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                                minWidth: "180px",
-                                zIndex: 1001,
-                              }}
-                            >
-                              {child.children.map((subChild, scidx) => (
-                                <div
-                                  key={subChild.key || scidx}
-                                  style={{
-                                    padding: "10px 18px",
-                                    cursor: "pointer",
-                                    whiteSpace: "nowrap",
-                                    borderBottom: "1px solid #f0f0f0"
-                                  }}
-                                  onClick={() => handleChildMenuClick(subChild.label)}
-                                >
-                                  {subChild.label}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                          <span>{child.label}</span>
+                          {child.children && <span style={{ float: "right" }}>▶</span>}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                )}
-              </div>
+                  {/* Right panel */}
+                  {activeSubIdx !== null && item.children[activeSubIdx] && item.children[activeSubIdx].children && (
+                    <div style={{
+                      minWidth: 320,
+                      padding: "24px 32px",
+                      background: "#fff",
+                    }}>
+                      <div style={{ fontWeight: 700, marginBottom: 12 }}>
+                        See All {item.children[activeSubIdx].label}
+                      </div>
+                      <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                        {item.children[activeSubIdx].children.map((child) => (
+                          <li
+                            key={child.key}
+                            style={{ padding: "8px 0", color: "#222", fontWeight: 400, cursor: "pointer" }}
+                            onClick={() => handleSubChildClick(child.label)}
+                          >
+                            {child.label}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

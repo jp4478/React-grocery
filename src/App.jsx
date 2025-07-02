@@ -1,13 +1,9 @@
-import "./App.css";
 import React, { useState, useEffect } from "react";
 import Home from "./components/Home";
 import Navbar from "./components/Navbar";
 import CartPage from "./components/CartPage"; // Create this component
-import AddProduct from "./components/AddProduct";
-import Product from "./components/Product";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "./Context/Context";
-import UpdateProduct from "./components/UpdateProduct";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import 'bootstrap/dist/css/bootstrap.min.css';

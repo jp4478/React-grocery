@@ -1,8 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import AppContext from "../Context/Context";
-import unplugged from "../assets/unplugged.png";
 import { FaSearch } from "react-icons/fa";
 
 const Home = ({ addToCart, search, searchResults }) => {
@@ -29,7 +27,7 @@ const Home = ({ addToCart, search, searchResults }) => {
 
   // Use searchResults if searching, otherwise show selectedProducts
   const productsToShow =
-    search && searchResults && searchResults.length() > 0
+    search && searchResults && searchResults.length > 0
       ? normalizedResults
       : selectedProducts; // allProducts = your normal product list
 
@@ -70,7 +68,7 @@ const Home = ({ addToCart, search, searchResults }) => {
           padding: "20px",
         }}
       >
-        {productsToShow.length() === 0 ? (
+        {productsToShow.length === 0 ? (
           <h2
             className="text-center"
             style={{
