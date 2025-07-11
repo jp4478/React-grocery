@@ -19,6 +19,10 @@ export const AppProvider = ({ children }) => {
   const [cart, setCart] = useState(JSON.parse(localStorage.getItem('cart')) || []);
   const [menu, setMenu] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const baseUrl = import.meta.env.VITE_API_URL;
+  const awsUrl = import.meta.env.VITE_APP_API_URL;
+
+
 
   const addToCart = (product) => {
     const existingProductIndex = cart.findIndex((item) => item.id === product.id);
@@ -61,7 +65,7 @@ export const AppProvider = ({ children }) => {
 
   const fetchMenu = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/menu");
+      const response = await axios.get(`${baseUrl}/menu`);
       console.log(response.data);
       setMenu(response.data);
     } catch (error) {
@@ -72,7 +76,7 @@ export const AppProvider = ({ children }) => {
   const fetchProductsByChildMenu = async (childMenuName) => {
     try {
       const response = await axios.get(
-        `http://localhost:8080/subCategory/display?childMenuName=${encodeURIComponent(childMenuName)}`
+        `${baseUrl}/subCategory/display?childMenuName=${encodeURIComponent(childMenuName)}`
       );
       return response.data;
     } catch (error) {

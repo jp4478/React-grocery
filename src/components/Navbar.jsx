@@ -62,14 +62,20 @@ const Navbar = ({ search, setSearch, searchResults, setSearchResults, cart }) =>
   const [activeSubIdx, setActiveSubIdx] = useState(null);
   const navigate = useNavigate();
 
+
   const handleSearch = async (e) => {
     const value = e.target.value;
     setSearch(value);
 
     if (value.trim() !== "") {
+      const baseUrl = import.meta.env.VITE_API_URL;
+      const awsUrl = import.meta.env.VITE_APP_API_URL;
+
       const response = await axios.get(
-        `http://localhost:8080/product/searchByPrefix?nameSuffix=${encodeURIComponent(value)}`
+        `${baseUrl}/product/searchByPrefix?nameSuffix=${encodeURIComponent(value)}`
+        
       );
+      // console.log("API URL:", process.env.REACT_APP_API_URL);
       setSearchResults(response.data);
       navigate("/"); // <-- Add this line to always show Home page on search
     } else {
